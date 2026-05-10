@@ -70,7 +70,7 @@ ${context}`
     // ── Step 4: Generate grounded answer ───────────────────────────────────
     const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
     const model = ai.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction,
       generationConfig: { temperature: 0.1 },
     })

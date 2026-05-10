@@ -8,8 +8,8 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-export const EMBEDDING_MODEL = 'text-embedding-004'
-export const VECTOR_SIZE = 768
+export const EMBEDDING_MODEL = 'gemini-embedding-2'
+export const VECTOR_SIZE = 3072
 
 /** Lazy getter for the Gemini client */
 function getClient() {
@@ -25,20 +25,16 @@ export async function embedText(text: string): Promise<number[]> {
 }
 
 /**
- * Embed an array of strings in batches of 100.
- * Returns embeddings in the same order as the input array.
+ * Embed an array of strings.
+ * We use sequential embedContent instead of batchEmbedContents due to SDK/API compatibility issues with text-embedding-004.
  */
 export async function embedTexts(texts: string[]): Promise<number[][]> {
-  const ai = getClient()
-  const model = ai.getGenerativeModel({ model: EMBEDDING_MODEL })
-  const BATCH = 100
   const all: number[][] = []
-
-  for (let i = 0; i < texts.length; i += BATCH) {
-    const batch = texts.slice(i, i + BATCH)
-    const reqs = batch.map((t) => ({ content: { role: 'user', parts: [{ text: t }] } }))
-    const result = await model.batchEmbedContents({ requests: reqs })
-    all.push(...result.embeddings.map((e) => e.values))
+  
+  // To avoid hitting rate limits instantly on the free tier, we can process them sequentially
+  for (const text of texts) {
+    const embedding = await embedText(text)
+    all.push(embedding)
   }
 
   return all
