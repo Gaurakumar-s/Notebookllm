@@ -60,8 +60,18 @@ export default function UploadZone({ onDocumentReady, document, onReset }: Uploa
         clearInterval(progressTimer)
 
         if (!res.ok) {
-          const body = await res.json()
-          throw new Error(body.error || 'Upload failed')
+          if (res.status === 413) {
+            throw new Error('File is too large. Vercel free tier limits uploads to 4.5MB.')
+          }
+          
+          const contentType = res.headers.get('content-type')
+          if (contentType && contentType.includes('application/json')) {
+            const body = await res.json()
+            throw new Error(body.error || 'Upload failed')
+          } else {
+            const text = await res.text()
+            throw new Error(`Upload failed: ${text.slice(0, 50)}...`)
+          }
         }
 
         const data = await res.json()
