@@ -23,14 +23,14 @@ Next.js 14 (Vercel Edge + Node.js API routes)
     ├── POST /api/upload ─── RAG Ingestion Pipeline
     │       │  1. Extract text (pdf-parse / UTF-8)
     │       │  2. Chunk  (sliding window, 1000 chars, 200 overlap)
-    │       │  3. Embed  (OpenAI text-embedding-3-small, 1536 dims)
+    │       │  3. Embed  (Google Gemini text-embedding-004, 768 dims)
     │       │  4. Store  (Qdrant Cloud — one collection per document)
     │       │
     └── POST /api/chat ──── RAG Retrieval & Generation
             │  1. Embed the user query
             │  2. Cosine-similarity search (top-5 chunks)
-            │  3. Build grounding prompt (context only)
-            │  4. Generate answer (GPT-4o-mini, temp=0.1)
+            │  3. Build grounding prompt (systemInstruction context)
+            │  4. Generate answer (Google gemini-1.5-flash, temp=0.1)
             └─────────────────────────────────────────
 ```
 
@@ -66,14 +66,14 @@ Chunk 3 : "o Bar"        (chars 14–end)
 ### 1. Ingestion (`POST /api/upload`)
 1. **Extract** — `pdf-parse` for PDFs; UTF-8 decode for plain text.
 2. **Chunk** — Sliding window chunker splits the text into overlapping 1000-character segments.
-3. **Embed** — Each chunk is sent to OpenAI `text-embedding-3-small` to produce a 1536-dimensional vector.
+3. **Embed** — Each chunk is sent to Google Gemini `text-embedding-004` to produce a 768-dimensional vector.
 4. **Store** — A unique Qdrant Cloud collection is created (`doc-<uuid>`), and all chunk vectors + metadata are upserted.
 
 ### 2. Retrieval & Generation (`POST /api/chat`)
-1. **Embed query** — The user's question is embedded using the same model.
+1. **Embed query** — The user's question is embedded using the same Gemini model.
 2. **Search** — Qdrant cosine similarity search returns the 5 most relevant chunks.
-3. **Prompt** — A strict system prompt provides only retrieved chunks as context; LLM is forbidden from using general knowledge.
-4. **Generate** — GPT-4o-mini (`temperature=0.1`) produces a grounded, cited answer.
+3. **Prompt** — A strict `systemInstruction` provides only retrieved chunks as context; LLM is forbidden from using general knowledge.
+4. **Generate** — Google `gemini-1.5-flash` (`temperature=0.1`) produces a grounded, cited answer.
 
 ---
 
@@ -83,8 +83,8 @@ Chunk 3 : "o Bar"        (chars 14–end)
 |-------|------------|
 | Framework | Next.js 14 (App Router) |
 | Language | TypeScript |
-| Embeddings | OpenAI `text-embedding-3-small` |
-| LLM | OpenAI `gpt-4o-mini` |
+| Embeddings | Google Gemini `text-embedding-004` |
+| LLM | Google Gemini `gemini-1.5-flash` |
 | Vector DB | Qdrant Cloud (cosine distance) |
 | PDF Parsing | `pdf-parse` |
 | Deployment | Vercel |
@@ -107,7 +107,7 @@ cp .env.example .env.local
 ```
 | Variable | Where to get it |
 |----------|-----------------|
-| `OPENAI_API_KEY` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| `GEMINI_API_KEY` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
 | `QDRANT_URL` | [cloud.qdrant.io](https://cloud.qdrant.io) → Cluster URL |
 | `QDRANT_API_KEY` | Qdrant Cloud → API Keys |
 

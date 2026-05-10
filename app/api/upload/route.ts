@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
       chunkCount: chunks.length,
       charCount: text.length,
     })
-  } catch (err) {
+  } catch (err: any) {
     console.error('[/api/upload] Error:', err)
-    return NextResponse.json({ error: 'Failed to process document.' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to process document.', details: err.message, stack: err.stack }, { status: 500 })
   }
 }
